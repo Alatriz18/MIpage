@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KDev Solutions — Desarrollo de Software & Transformación Digital Ecuador</title>
+  <meta name="description" content="Desarrollo de software a la medida, consultoría técnica y transformación digital para cualquier industria: salud, logística, retail, gobierno. Ecuador y LATAM.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:      #04080F;
+      --bg-card: rgba(255,255,255,0.04);
+      --cyan:    #00D4FF;
+      --violet:  #7C3AED;
+      --green:   #10B981;
+      --amber:   #F59E0B;
+      --rose:    #F43F5E;
+      --teal:    #14B8A6;
+      --hi:      #F8FAFC;
+      --lo:      #8B9EC5;
+      --border:  rgba(0,212,255,0.15);
+    }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--hi); font-family: 'Inter', sans-serif; overflow-x: hidden; line-height: 1.6; }
+    #particle-canvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+      background: rgba(4,8,15,0.85); backdrop-filter: blur(24px);
+      border-bottom: 1px solid var(--border); transition: padding .3s;
+    }
+    .nav-inner {
+      max-width: 1280px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: .9rem 2rem;
+    }
+    .nav-logo { font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:1.4rem; letter-spacing:-0.02em; text-decoration:none; color:var(--hi); }
+    .nav-logo span { color: var(--cyan); }
+
+    /* Desktop links */
+    .nav-links { display:flex; align-items:center; gap:.25rem; list-style:none; }
+    .nav-links > li { position: relative; }
+    .nav-links > li > a {
+      color:var(--lo); text-decoration:none; font-size:.85rem; font-weight:500;
+      padding:.45rem .75rem; border-radius:6px;
+      transition:color .2s, background .2s; display:block; white-space:nowrap;
+    }
+    .nav-links > li > a:hover { color:var(--cyan); background:rgba(0,212,255,0.06); }
+    .nav-links > li > a.active { color:var(--cyan); }
+
+    /* Dropdown */
+    .has-dropdown > a::after { content:' ▾'; font-size:.65rem; }
+    .dropdown {
+      display: none; position: absolute; top: calc(100% + .5rem); left: 0;
+      background: rgba(8,13,26,0.97); border: 1px solid var(--border);
+      border-radius: 12px; padding: .5rem; min-width: 220px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.6); backdrop-filter: blur(20px);
+    }
+    .has-dropdown:hover .dropdown { display: block; }
+    .dropdown a {
+      display: flex; align-items: center; gap: .6rem;
+      padding: .55rem .9rem; border-radius: 8px; color: var(--lo);
+      text-decoration: none; font-size: .85rem; transition: background .2s, color .2s;
+    }
+    .dropdown a:hover { background: rgba(0,212,255,0.08); color: var(--hi); }
+    .dropdown a .dd-icon { font-size: 1rem; width:20px; text-align:center; flex-shrink:0; }
+
+    .nav-cta {
+      background: linear-gradient(135deg,var(--cyan),var(--violet));
+      color: #fff !important; padding: .5rem 1.3rem; border-radius: 7px;
+      font-weight: 700 !important; font-size: .85rem !important;
+      transition: opacity .2s, transform .2s; margin-left: .5rem;
+    }
+    .nav-cta:hover { opacity:.88; transform:translateY(-1px); background:transparent !important; }
+
+    /* Hamburger */
+    .hamburger {
+      display: none; flex-direction: column; gap: 5px; cursor: pointer;
+      padding: .4rem; border: 1px solid var(--border); border-radius: 7px;
+      background: transparent;
+    }
+    .hamburger span { display: block; width: 22px; height: 2px; background: var(--hi); border-radius: 2px; transition: transform .3s, opacity .3s; }
+    .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .hamburger.open span:nth-child(2) { opacity: 0; }
+    .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    /* Mobile drawer */
+    .mobile-menu {
+      display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 190;
+      background: rgba(4,8,15,0.98); backdrop-filter: blur(20px);
+      flex-direction: column; padding: 5rem 2rem 2rem;
+      overflow-y: auto;
+    }
+    .mobile-menu.open { display: flex; }
+    .mobile-menu a {
+      color: var(--lo); text-decoration: none; font-size: 1.1rem; font-weight: 500;
+      padding: .9rem 0; border-bottom: 1px solid rgba(255,255,255,0.06);
+      transition: color .2s;
+    }
+    .mobile-menu a:hover, .mobile-menu a.active { color: var(--cyan); }
+    .mobile-menu .mm-group-label {
+      font-family: 'JetBrains Mono', monospace; font-size: .7rem;
+      color: var(--cyan); letter-spacing: .1em; text-transform: uppercase;
+      margin-top: 1.5rem; margin-bottom: .25rem; border-bottom: none !important;
+      padding: 0 !important;
+    }
+    .mobile-menu .mm-cta {
+      margin-top: 2rem; background: linear-gradient(135deg,var(--cyan),var(--violet));
+      color: #fff !important; padding: 1rem; border-radius: 8px; text-align: center;
+      font-weight: 700; border-bottom: none !important;
+    }
+
+    /* ── HERO ── */
+    #hero { position:relative; z-index:1; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:7rem 2rem 5rem; }
+    .hero-badge { display:inline-flex; align-items:center; gap:.5rem; background:rgba(0,212,255,0.08); border:1px solid rgba(0,212,255,0.3); border-radius:100px; padding:.35rem 1rem; font-family:'JetBrains Mono',monospace; font-size:.75rem; color:var(--cyan); letter-spacing:.08em; margin-bottom:2rem; }
+    .hero-badge .dot { width:7px;height:7px;border-radius:50%;background:var(--green);animation:pdot 2s infinite; }
+    @keyframes pdot { 0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(16,185,129,.6)}50%{opacity:.8;box-shadow:0 0 0 6px rgba(16,185,129,0)} }
+    .hero-title { font-family:'Space Grotesk',sans-serif; font-size:clamp(2.6rem,6.5vw,5.6rem); font-weight:700; line-height:1.04; letter-spacing:-0.03em; max-width:960px; margin-bottom:1.5rem; }
+    .grad { background:linear-gradient(120deg,var(--cyan) 0%,var(--violet) 50%,var(--green) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .hero-sub { font-size:1.1rem; color:var(--lo); max-width:640px; line-height:1.75; margin-bottom:2.5rem; }
+    .hero-actions { display:flex; gap:1rem; flex-wrap:wrap; justify-content:center; margin-bottom:3rem; }
+    .btn-primary { background:linear-gradient(135deg,var(--cyan),var(--violet)); color:#fff; padding:.9rem 2.4rem; border-radius:8px; font-weight:600; font-size:1rem; text-decoration:none; transition:transform .2s,box-shadow .2s; box-shadow:0 0 30px rgba(0,212,255,0.25); }
+    .btn-primary:hover { transform:translateY(-2px); box-shadow:0 0 55px rgba(0,212,255,0.45); }
+    .btn-secondary { background:transparent; color:var(--hi); padding:.9rem 2.4rem; border-radius:8px; font-weight:500; font-size:1rem; text-decoration:none; border:1px solid var(--border); transition:border-color .2s,background .2s; }
+    .btn-secondary:hover { border-color:var(--cyan); background:rgba(0,212,255,0.05); }
+    .typing-wrap { font-family:'JetBrains Mono',monospace; font-size:1rem; color:var(--cyan); margin-bottom:2rem; min-height:1.5em; }
+    .typing-cursor { display:inline-block; width:2px; height:1em; background:var(--cyan); margin-left:2px; vertical-align:middle; animation:blink .75s infinite; }
+    @keyframes blink { 0%,100%{opacity:1}50%{opacity:0} }
+    .hero-stats { display:flex; gap:3rem; justify-content:center; flex-wrap:wrap; padding-top:2rem; border-top:1px solid var(--border); width:100%; max-width:760px; }
+    .stat { text-align:center; }
+    .stat-num { font-family:'Space Grotesk',sans-serif; font-size:2.6rem; font-weight:700; color:var(--cyan); line-height:1; }
+    .stat-label { font-size:.72rem; color:var(--lo); letter-spacing:.06em; margin-top:.35rem; text-transform:uppercase; }
+    .stat-divider { width:1px; background:var(--border); align-self:stretch; }
+
+    /* ── INDUSTRIES ── */
+    #industrias { position:relative; z-index:1; padding:2rem 0; background:linear-gradient(90deg,rgba(0,212,255,0.04),rgba(124,58,237,0.06),rgba(0,212,255,0.04)); border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
+    .ind-inner { max-width:1200px; margin:0 auto; padding:0 2rem; }
+    .ind-title { text-align:center; font-family:'JetBrains Mono',monospace; font-size:.72rem; letter-spacing:.12em; color:var(--lo); margin-bottom:1.25rem; text-transform:uppercase; }
+    .ind-grid { display:flex; flex-wrap:wrap; gap:.75rem; justify-content:center; }
+    .ind-chip { display:flex; align-items:center; gap:.5rem; background:var(--bg-card); border:1px solid var(--border); border-radius:100px; padding:.4rem 1rem; font-size:.85rem; font-weight:500; transition:border-color .2s,background .2s; cursor:default; }
+    .ind-chip:hover { border-color:var(--cyan); background:rgba(0,212,255,0.06); }
+    .ic-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+
+    /* ── COMMON ── */
+    section { position:relative; z-index:1; }
+    .section-inner { max-width:1200px; margin:0 auto; padding:6rem 2rem; }
+    .eyebrow { font-family:'JetBrains Mono',monospace; font-size:.72rem; letter-spacing:.12em; color:var(--cyan); text-transform:uppercase; margin-bottom:.75rem; }
+    .section-title { font-family:'Space Grotesk',sans-serif; font-size:clamp(1.8rem,4vw,3rem); font-weight:700; letter-spacing:-0.02em; line-height:1.15; margin-bottom:1rem; }
+    .section-desc { color:var(--lo); max-width:560px; font-size:1.05rem; line-height:1.75; }
+    .gdiv { height:1px; background:linear-gradient(to right,transparent,var(--border),transparent); margin:0 2rem; }
+
+    /* ── PRODUCTS ── */
+    .products-header { text-align:center; margin-bottom:4rem; }
+    .products-header .section-desc { margin:0 auto; }
+    .products-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
+    .pc { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:2.5rem; backdrop-filter:blur(10px); transition:transform .3s,border-color .3s,box-shadow .3s; }
+    .pc:hover { transform:translateY(-5px); border-color:var(--cyan); box-shadow:0 20px 60px rgba(0,212,255,0.08); }
+    .pc.featured { grid-column:1/-1; display:grid; grid-template-columns:1fr 1fr; gap:2rem; align-items:center; border-color:rgba(0,212,255,0.3); background:linear-gradient(135deg,rgba(0,212,255,0.06),rgba(124,58,237,0.06)); }
+    .pc-tag { display:inline-block; font-size:.7rem; font-family:'JetBrains Mono',monospace; letter-spacing:.08em; padding:.2rem .7rem; border-radius:100px; margin-bottom:1rem; }
+    .t-star { background:rgba(245,158,11,.15); color:var(--amber); border:1px solid rgba(245,158,11,.3); }
+    .t-new  { background:rgba(16,185,129,.12); color:var(--green); border:1px solid rgba(16,185,129,.3); }
+    .t-health { background:rgba(244,63,94,.1); color:var(--rose); border:1px solid rgba(244,63,94,.3); }
+    .pc-icon { width:54px; height:54px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.7rem; margin-bottom:1.5rem; }
+    .ic-c{background:rgba(0,212,255,0.12);} .ic-v{background:rgba(124,58,237,0.12);} .ic-g{background:rgba(16,185,129,0.12);} .ic-a{background:rgba(245,158,11,0.12);} .ic-r{background:rgba(244,63,94,0.1);} .ic-t{background:rgba(20,184,166,0.12);}
+    .pc-title { font-family:'Space Grotesk',sans-serif; font-size:1.4rem; font-weight:600; margin-bottom:.75rem; }
+    .pc-desc { color:var(--lo); font-size:.95rem; line-height:1.65; margin-bottom:1.5rem; }
+    .pc-feat { list-style:none; display:flex; flex-direction:column; gap:.5rem; }
+    .pc-feat li { display:flex; align-items:center; gap:.6rem; font-size:.88rem; color:var(--lo); }
+    .pc-feat li::before { content:'✓'; color:var(--green); font-weight:700; flex-shrink:0; }
+    .pc-visual { background:rgba(0,0,0,0.35); border-radius:12px; padding:1.5rem; font-family:'JetBrains Mono',monospace; font-size:.78rem; color:var(--lo); line-height:1.9; border:1px solid rgba(255,255,255,0.06); }
+    .vc{color:var(--cyan);} .vg{color:var(--green);} .vv{color:#a78bfa;} .va{color:var(--amber);} .vr{color:var(--rose);}
+
+    /* ── SALUD ── */
+    #salud { background:linear-gradient(180deg,transparent,rgba(244,63,94,0.04) 50%,transparent); }
+    .salud-grid { display:grid; grid-template-columns:1fr 1fr; gap:4rem; align-items:center; }
+    .salud-cards { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+    .salud-card { background:var(--bg-card); border:1px solid rgba(244,63,94,0.2); border-radius:14px; padding:1.5rem; transition:border-color .2s,background .2s; }
+    .salud-card:hover { border-color:var(--rose); background:rgba(244,63,94,0.04); }
+    .sc-icon { font-size:1.8rem; margin-bottom:.75rem; }
+    .sc-title { font-family:'Space Grotesk',sans-serif; font-weight:600; margin-bottom:.4rem; font-size:.95rem; }
+    .sc-desc { color:var(--lo); font-size:.83rem; line-height:1.55; }
+    .salud-highlight { background:linear-gradient(135deg,rgba(244,63,94,0.1),rgba(124,58,237,0.08)); border:1px solid rgba(244,63,94,0.25); border-radius:16px; padding:1.5rem; margin-top:1.5rem; }
+    .salud-highlight p { color:var(--lo); font-size:.93rem; line-height:1.7; }
+    .salud-highlight strong { color:var(--hi); }
+
+    /* ── CONSULTORÍA & TD ── */
+    #consultoria { background:linear-gradient(180deg,transparent,rgba(20,184,166,0.04) 50%,transparent); }
+    .cons-grid { display:grid; grid-template-columns:1fr 1fr; gap:4rem; align-items:start; }
+    .cons-pills { display:flex; flex-wrap:wrap; gap:.6rem; margin:1.5rem 0; }
+    .cons-pill { background:rgba(20,184,166,0.08); border:1px solid rgba(20,184,166,0.25); border-radius:100px; padding:.3rem .9rem; font-size:.8rem; color:var(--teal); font-family:'JetBrains Mono',monospace; }
+
+    .td-cards { display:grid; grid-template-columns:1fr; gap:1rem; }
+    .td-card { background:var(--bg-card); border:1px solid var(--border); border-radius:14px; padding:1.5rem; display:flex; gap:1rem; align-items:flex-start; transition:border-color .2s,background .2s; }
+    .td-card:hover { border-color:var(--teal); background:rgba(20,184,166,0.04); }
+    .td-icon { width:44px; height:44px; border-radius:10px; background:rgba(20,184,166,0.1); display:flex; align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0; }
+    .td-text strong { display:block; font-family:'Space Grotesk',sans-serif; font-weight:600; margin-bottom:.3rem; }
+    .td-text p { color:var(--lo); font-size:.88rem; line-height:1.6; }
+
+    .cons-phases { margin-top:2rem; }
+    .cons-phase { display:flex; gap:1rem; align-items:flex-start; padding:1rem 0; border-bottom:1px solid rgba(255,255,255,0.05); }
+    .cons-phase:last-child { border-bottom:none; }
+    .cp-num { font-family:'JetBrains Mono',monospace; font-size:.75rem; color:var(--teal); background:rgba(20,184,166,0.1); border:1px solid rgba(20,184,166,0.25); border-radius:6px; padding:.3rem .6rem; flex-shrink:0; font-weight:500; }
+    .cp-title { font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:.95rem; margin-bottom:.25rem; }
+    .cp-desc { color:var(--lo); font-size:.85rem; line-height:1.55; }
+
+    /* ── SERVICES ── */
+    #cualquier { background:linear-gradient(180deg,transparent,rgba(0,212,255,0.03) 50%,transparent); }
+    .cualquier-hero { text-align:center; margin-bottom:3rem; }
+    .big-claim { font-family:'Space Grotesk',sans-serif; font-size:clamp(2rem,5vw,4rem); font-weight:700; letter-spacing:-0.03em; line-height:1.1; margin-bottom:1rem; }
+    .services-mega { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; }
+    .svc { background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:1.5rem; transition:border-color .2s,background .2s,transform .2s; }
+    .svc:hover { border-color:var(--cyan); background:rgba(0,212,255,0.04); transform:translateY(-3px); }
+    .svc-em { font-size:1.6rem; margin-bottom:.75rem; display:block; }
+    .svc-name { font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:.93rem; margin-bottom:.4rem; }
+    .svc-blurb { color:var(--lo); font-size:.82rem; line-height:1.55; }
+
+    /* ── TICKER ── */
+    .stack-ticker-wrap { position:relative; overflow:hidden; padding:1rem 0; mask-image:linear-gradient(to right,transparent,#000 10%,#000 90%,transparent); }
+    .stack-ticker { display:flex; gap:1.5rem; animation:ticker 30s linear infinite; width:max-content; }
+    .stack-ticker:hover { animation-play-state:paused; }
+    @keyframes ticker { from{transform:translateX(0)}to{transform:translateX(-50%)} }
+    .tech-pill { display:flex; align-items:center; gap:.6rem; background:var(--bg-card); border:1px solid var(--border); border-radius:100px; padding:.6rem 1.2rem; white-space:nowrap; font-size:.85rem; font-weight:500; transition:border-color .2s; flex-shrink:0; }
+    .tech-pill:hover { border-color:var(--cyan); }
+    .tdot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+
+    /* ── PROCESO ── */
+    .proceso-steps { display:grid; grid-template-columns:repeat(4,1fr); gap:1.5rem; margin-top:3rem; position:relative; }
+    .proceso-steps::before { content:''; position:absolute; top:2rem; left:calc(12.5% + 1rem); right:calc(12.5% + 1rem); height:1px; background:linear-gradient(to right,var(--cyan),var(--violet)); z-index:0; }
+    .step { text-align:center; position:relative; z-index:1; }
+    .step-num { width:4rem; height:4rem; border-radius:50%; background:var(--bg); border:2px solid var(--cyan); display:flex; align-items:center; justify-content:center; font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:1.1rem; color:var(--cyan); margin:0 auto 1.25rem; box-shadow:0 0 22px rgba(0,212,255,0.22); }
+    .step-title { font-family:'Space Grotesk',sans-serif; font-weight:600; margin-bottom:.5rem; }
+    .step-desc { color:var(--lo); font-size:.85rem; line-height:1.55; }
+
+    /* ── PORQUE ── */
+    #porque { background:linear-gradient(135deg,rgba(0,212,255,0.04),rgba(124,58,237,0.04)); border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
+    .porque-grid { display:grid; grid-template-columns:1fr 1fr; gap:4rem; align-items:center; }
+    .porque-list { display:flex; flex-direction:column; gap:1.5rem; margin-top:2rem; }
+    .porque-item { display:flex; gap:1rem; align-items:flex-start; }
+    .p-icon { width:42px; height:42px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0; }
+    .porque-text strong { display:block; font-family:'Space Grotesk',sans-serif; font-weight:600; margin-bottom:.25rem; }
+    .porque-text p { color:var(--lo); font-size:.9rem; line-height:1.6; }
+    .metrics-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+    .metric-card { background:var(--bg-card); border:1px solid var(--border); border-radius:14px; padding:1.75rem; text-align:center; transition:border-color .2s; }
+    .metric-card:hover { border-color:var(--cyan); }
+    .metric-num { font-family:'Space Grotesk',sans-serif; font-size:2.4rem; font-weight:700; line-height:1; margin-bottom:.4rem; }
+    .mc{color:var(--cyan);} .mv{color:#a78bfa;} .mg{color:var(--green);} .ma{color:var(--amber);}
+    .metric-label { color:var(--lo); font-size:.85rem; }
+
+    /* ── CONTACT ── */
+    .contact-layout { display:grid; grid-template-columns:1fr 1.5fr; gap:4rem; align-items:start; }
+    .contact-items { display:flex; flex-direction:column; gap:1rem; margin:1.5rem 0; }
+    .contact-item { display:flex; align-items:center; gap:.75rem; font-size:.95rem; }
+    .ci-icon { width:38px; height:38px; border-radius:8px; background:rgba(0,212,255,0.08); border:1px solid rgba(0,212,255,0.2); display:flex; align-items:center; justify-content:center; font-size:1rem; flex-shrink:0; }
+    .contact-item a { color:var(--hi); text-decoration:none; } .contact-item a:hover { color:var(--cyan); }
+    .contact-promise { background:linear-gradient(135deg,rgba(16,185,129,0.08),rgba(0,212,255,0.06)); border:1px solid rgba(16,185,129,0.25); border-radius:12px; padding:1.5rem; }
+    .contact-promise p { font-size:.9rem; color:var(--lo); line-height:1.65; }
+    .contact-promise strong { color:var(--green); }
+    .contact-form { background:var(--bg-card); border:1px solid var(--border); border-radius:20px; padding:2.5rem; backdrop-filter:blur(10px); }
+    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+    .field { display:flex; flex-direction:column; gap:.4rem; margin-bottom:1.2rem; }
+    .field label { font-size:.8rem; color:var(--lo); font-weight:500; letter-spacing:.03em; }
+    .field input,.field select,.field textarea { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:.75rem 1rem; color:var(--hi); font-family:'Inter',sans-serif; font-size:.93rem; outline:none; transition:border-color .2s,box-shadow .2s; width:100%; }
+    .field input::placeholder,.field textarea::placeholder { color:rgba(139,158,197,0.45); }
+    .field input:focus,.field select:focus,.field textarea:focus { border-color:var(--cyan); box-shadow:0 0 0 3px rgba(0,212,255,0.1); }
+    .field select option { background:#080D1A; }
+    .field textarea { resize:vertical; min-height:110px; }
+    .form-btn { width:100%; background:linear-gradient(135deg,var(--cyan),var(--violet)); color:#fff; border:none; padding:.95rem; border-radius:8px; font-size:1rem; font-weight:600; font-family:'Space Grotesk',sans-serif; cursor:pointer; transition:opacity .2s,transform .2s; box-shadow:0 0 30px rgba(0,212,255,0.2); }
+    .form-btn:hover { opacity:.9; transform:translateY(-1px); }
+    .form-btn:disabled { opacity:.6; cursor:not-allowed; transform:none; }
+    .form-success { display:none; text-align:center; padding:2rem; }
+    .form-success .check { font-size:3.5rem; margin-bottom:1rem; }
+    .form-error-msg { display:none; background:rgba(244,63,94,0.1); border:1px solid rgba(244,63,94,0.3); border-radius:8px; padding:.75rem 1rem; font-size:.88rem; color:var(--rose); margin-bottom:1rem; }
+
+    /* ── FOOTER ── */
+    footer { position:relative; z-index:1; border-top:1px solid var(--border); padding:2.5rem 4rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; }
+    .footer-logo { font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:1.1rem; }
+    .footer-logo span { color:var(--cyan); }
+    footer p { color:var(--lo); font-size:.85rem; }
+    .footer-links { display:flex; gap:1.5rem; flex-wrap:wrap; }
+    .footer-links a { color:var(--lo); text-decoration:none; font-size:.82rem; transition:color .2s; }
+    .footer-links a:hover { color:var(--cyan); }
+
+    /* WA FLOAT */
+    .wa-float { position:fixed; bottom:2rem; right:2rem; z-index:190; width:60px; height:60px; background:#25D366; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.7rem; text-decoration:none; box-shadow:0 4px 24px rgba(37,211,102,0.45); transition:transform .2s,box-shadow .2s; }
+    .wa-float:hover { transform:scale(1.12); box-shadow:0 6px 36px rgba(37,211,102,0.6); }
+
+    /* REVEAL */
+    .reveal { opacity:0; transform:translateY(24px); transition:opacity .6s ease,transform .6s ease; }
+    .reveal.visible { opacity:1; transform:translateY(0); }
+
+    /* ── RESPONSIVE ── */
+    @media(max-width:1024px) {
+      .services-mega { grid-template-columns:repeat(3,1fr); }
+    }
+    @media(max-width:860px) {
+      .nav-links { display:none; }
+      .hamburger { display:flex; }
+      .products-grid,.salud-grid,.cons-grid,.porque-grid,.contact-layout { grid-template-columns:1fr; gap:2rem; }
+      .pc.featured { grid-column:auto; grid-template-columns:1fr; }
+      .salud-cards { grid-template-columns:1fr 1fr; }
+      .services-mega { grid-template-columns:1fr 1fr; }
+      .proceso-steps { grid-template-columns:1fr 1fr; }
+      .proceso-steps::before { display:none; }
+      .metrics-grid { grid-template-columns:1fr 1fr; }
+      .form-row { grid-template-columns:1fr; }
+      footer { padding:2rem 1.5rem; flex-direction:column; text-align:center; }
+      .footer-links { justify-content:center; }
+    }
+    @media(max-width:540px) {
+      .salud-cards,.services-mega { grid-template-columns:1fr; }
+      .hero-stats { gap:1.5rem; }
+      .stat-divider { display:none; }
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="particle-canvas"></canvas>
+<a href="https://wa.me/593983135746?text=Hola%20Kevin!%20Vi%20tu%20portafolio%20y%20me%20interesa%20una%20soluci%C3%B3n%20de%20software." class="wa-float" target="_blank" title="WhatsApp">💬</a>
+
+<!-- ═══ NAV ═══ -->
+<nav id="navbar">
+  <div class="nav-inner">
+    <a href="#hero" class="nav-logo">KDev<span>.</span></a>
+
+    <ul class="nav-links">
+      <li><a href="#hero">Inicio</a></li>
+
+      <li class="has-dropdown">
+        <a href="#productos">Productos</a>
+        <div class="dropdown">
+          <a href="#productos"><span class="dd-icon">📊</span>Inventario &amp; Contabilidad</a>
+          <a href="#productos"><span class="dd-icon">🗂️</span>Gestión Documental</a>
+          <a href="#productos"><span class="dd-icon">🏥</span>Sistema Clínico</a>
+        </div>
+      </li>
+
+      <li class="has-dropdown">
+        <a href="#cualquier">Servicios</a>
+        <div class="dropdown">
+          <a href="#cualquier"><span class="dd-icon">💻</span>Desarrollo a la medida</a>
+          <a href="#salud"><span class="dd-icon">🏥</span>Sector Salud</a>
+          <a href="#consultoria"><span class="dd-icon">🧠</span>Consultoría Técnica</a>
+          <a href="#consultoria"><span class="dd-icon">🚀</span>Transformación Digital</a>
+        </div>
+      </li>
+
+      <li><a href="#salud">Salud</a></li>
+      <li><a href="#consultoria">Consultoría</a></li>
+      <li><a href="#proceso">Proceso</a></li>
+      <li><a href="#contacto" class="nav-cta">Habla conmigo →</a></li>
+    </ul>
+
+    <button class="hamburger" id="hamburger" aria-label="Menú" onclick="toggleMenu()">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- Mobile drawer -->
+<nav class="mobile-menu" id="mobile-menu">
+  <span class="mm-group-label">Navegación</span>
+  <a href="#hero" onclick="closeMenu()">🏠 Inicio</a>
+  <span class="mm-group-label">Productos</span>
+  <a href="#productos" onclick="closeMenu()">📊 Inventario &amp; Contabilidad</a>
+  <a href="#productos" onclick="closeMenu()">🗂️ Gestión Documental</a>
+  <a href="#productos" onclick="closeMenu()">🏥 Sistema Clínico</a>
+  <span class="mm-group-label">Servicios</span>
+  <a href="#cualquier" onclick="closeMenu()">💻 Desarrollo a la medida</a>
+  <a href="#salud" onclick="closeMenu()">❤️ Sector Salud</a>
+  <a href="#consultoria" onclick="closeMenu()">🧠 Consultoría Técnica</a>
+  <a href="#consultoria" onclick="closeMenu()">🚀 Transformación Digital</a>
+  <span class="mm-group-label">Empresa</span>
+  <a href="#proceso" onclick="closeMenu()">⚙️ Cómo trabajamos</a>
+  <a href="#porque" onclick="closeMenu()">⭐ Por qué elegirnos</a>
+  <a href="#contacto" onclick="closeMenu()" class="mm-cta">Habla conmigo →</a>
+</nav>
+
+<!-- ═══ HERO ═══ -->
+<section id="hero">
+  <div class="hero-badge"><span class="dot"></span>Disponible para proyectos · Ecuador &amp; LATAM</div>
+  <h1 class="hero-title">
+    Si lo puedes imaginar,<br><span class="grad">yo lo puedo programar</span>
+  </h1>
+  <p class="hero-sub">Desarrollo software a la medida, ofrezco consultoría técnica y acompaño la <strong>transformación digital</strong> de tu negocio — en cualquier industria, de cualquier tamaño.</p>
+  <div class="typing-wrap">&gt; <span id="typing-text"></span><span class="typing-cursor"></span></div>
+  <div class="hero-actions">
+    <a href="#contacto" class="btn-primary">Quiero mi sistema ahora →</a>
+    <a href="#cualquier" class="btn-secondary">Ver todos los servicios</a>
+  </div>
+  <div class="hero-stats">
+    <div class="stat"><div class="stat-num" id="cnt-p">0</div><div class="stat-label">Proyectos entregados</div></div>
+    <div class="stat-divider"></div>
+    <div class="stat"><div class="stat-num" id="cnt-a">0</div><div class="stat-label">Años de experiencia</div></div>
+    <div class="stat-divider"></div>
+    <div class="stat"><div class="stat-num" id="cnt-c">0</div><div class="stat-label">Clientes activos</div></div>
+    <div class="stat-divider"></div>
+    <div class="stat"><div class="stat-num">∞</div><div class="stat-label">Ideas posibles</div></div>
+  </div>
+</section>
+
+<!-- INDUSTRIAS -->
+<div id="industrias">
+  <div class="ind-inner">
+    <div class="ind-title">Industrias donde puedo trabajar contigo</div>
+    <div class="ind-grid">
+      <div class="ind-chip"><span class="ic-dot" style="background:var(--rose)"></span>🏥 Salud &amp; Clínicas</div>
+      <div class="ind-chip"><span class="ic-dot" style="background:var(--amber)"></span>📦 Retail &amp; Inventario</div>
+      <div class="ind-chip"><span class="ic-dot" style="background:var(--cyan)"></span>🏛️ Gobierno &amp; GADs</div>
+      <div class="ind-chip"><span class="ic-dot" style="background:var(--green)"></span>🚚 Logística</div>
+      <div class="ind-chip"><span class="ic-dot" style="background:var(--violet)"></span>🎓 Educación</div>
+      <div class="ind-chip"><span class="ic-dot" style="background:var(--amber)"></span>🏗️ Construcción</div>
+      <div class="ind-chip"><span class="ic-dot" style="background:var(--cyan)"></span>🍽️ Restaurantes</div>
+      <div class="ind-chip"><span class="ic-dot" style="background:var(--green)"></span>🌾 Agroindustria</div>
+      <div class="ind-chip"><span class="ic-dot" style="background:var(--rose)"></span>💼 Servicios Profesionales</div>
+      <div class="ind-chip"><span class="ic-dot" style="background:var(--violet)"></span>🏦 Fintech</div>
+    </div>
+  </div>
+</div>
+
+<div class="gdiv"></div>
+
+<!-- ═══ PRODUCTOS ═══ -->
+<section id="productos">
+  <div class="section-inner">
+    <div class="products-header reveal">
+      <div class="eyebrow">// productos estrella</div>
+      <h2 class="section-title">Sistemas probados, listos para tu empresa</h2>
+      <p class="section-desc">Plataformas que ya corren en producción en empresas ecuatorianas. Adaptables en días, no en meses.</p>
+    </div>
+    <div class="products-grid">
+      <div class="pc featured reveal">
+        <div>
+          <div class="pc-tag t-star">⭐ Producto Estrella #1</div>
+          <div class="pc-icon ic-c">📊</div>
+          <h3 class="pc-title">Inventario &amp; Contabilidad Ecuatoriana</h3>
+          <p class="pc-desc">POS, control de stock, motor contable NIIF/NEC, facturación electrónica SRI validada, formularios 103/104/105 y ATS. Todo integrado y en la nube.</p>
+          <ul class="pc-feat">
+            <li>Factura electrónica con firma XAdES-BES</li>
+            <li>Motor contable NEC/NIIF con plan de cuentas</li>
+            <li>Formularios SRI 103, 104, 105 y ATS automáticos</li>
+            <li>POS multi-caja en tiempo real</li>
+            <li>Reportes financieros PDF/Excel</li>
+            <li>Multi-empresa con consolidación</li>
+          </ul>
+        </div>
+        <div class="pc-visual">
+          <span class="vc">// SRI — Factura autorizada</span><br>
+          <span class="va">"claveAcceso":</span> <span class="vg">"220620250112…"</span><br>
+          <span class="va">"estado":</span>      <span class="vg">"AUTORIZADO" ✓</span><br>
+          <span class="va">"sri_code":</span>    <span class="vc">"200 OK"</span><br><br>
+          <span class="vc">// Balance automático (NIIF)</span><br>
+          <span class="vv">Activos:</span>       <span class="vg">$84,320.00</span><br>
+          <span class="vv">Pasivos:</span>       <span style="color:#f87171">$22,100.00</span><br>
+          <span class="vv">Patrimonio:</span>    <span class="vg">$62,220.00</span><br><br>
+          <span class="vc">// Stack</span><br>
+          <span class="vg">Next.js</span> · <span class="vv">Firebase</span> · <span class="va">TypeScript</span> · <span class="vc">SRI API</span>
+        </div>
+      </div>
+      <div class="pc reveal">
+        <div class="pc-tag t-new">🏛️ Gov-Tech</div>
+        <div class="pc-icon ic-v">🗂️</div>
+        <h3 class="pc-title">Gestión Documental Institucional</h3>
+        <p class="pc-desc">Digitalización y trazabilidad de trámites con firma electrónica P12, flujos configurables y auditoría completa. Listo para GADs y entidades públicas.</p>
+        <ul class="pc-feat">
+          <li>Firma electrónica desde el navegador</li>
+          <li>Flujos de trámites 100% configurables</li>
+          <li>Generación PDF automática (WeasyPrint)</li>
+          <li>Audit log inmutable por acción</li>
+        </ul>
+      </div>
+      <div class="pc reveal">
+        <div class="pc-tag t-health">🏥 HealthTech</div>
+        <div class="pc-icon ic-r">❤️‍🩺</div>
+        <h3 class="pc-title">Sistema de Gestión Clínica</h3>
+        <p class="pc-desc">Historia clínica digital, agenda de citas, facturación SRI, inventario de medicamentos y reportes para clínicas, consultorios y laboratorios.</p>
+        <ul class="pc-feat">
+          <li>Historia clínica electrónica por paciente</li>
+          <li>Agenda y turnos online</li>
+          <li>Facturación electrónica SRI integrada</li>
+          <li>Control de inventario farmacéutico</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="gdiv"></div>
+
+<!-- ═══ SALUD ═══ -->
+<section id="salud">
+  <div class="section-inner">
+    <div class="salud-grid">
+      <div>
+        <div class="eyebrow reveal" style="color:var(--rose)">// sector salud</div>
+        <h2 class="section-title reveal">Software especializado para el sector salud</h2>
+        <p class="section-desc reveal">El sector salud tiene necesidades únicas: privacidad de datos, trazabilidad de procesos y cumplimiento regulatorio. Tengo experiencia construyendo soluciones que entienden estas realidades.</p>
+        <div class="salud-highlight reveal">
+          <p><strong>¿Tienes una clínica, consultorio, laboratorio o farmacia?</strong> Puedo construirte un sistema completo: desde la historia clínica hasta la facturación electrónica SRI, pasando por inventario de medicamentos, agenda de citas y reportes para el MSP.</p>
+        </div>
+        <br>
+        <a href="#contacto" class="btn-primary reveal" style="display:inline-block;margin-top:.5rem">Necesito un sistema de salud →</a>
+      </div>
+      <div class="salud-cards">
+        <div class="salud-card reveal"><div class="sc-icon">🏥</div><div class="sc-title">Clínicas &amp; Hospitales</div><p class="sc-desc">Historia clínica, internaciones, quirófanos, facturación y estadísticas MSP.</p></div>
+        <div class="salud-card reveal"><div class="sc-icon">👨‍⚕️</div><div class="sc-title">Consultorios</div><p class="sc-desc">Agenda online, expediente digital, recetas y cobros con factura electrónica.</p></div>
+        <div class="salud-card reveal"><div class="sc-icon">🔬</div><div class="sc-title">Laboratorios</div><p class="sc-desc">Gestión de muestras, resultados digitales y portal del paciente.</p></div>
+        <div class="salud-card reveal"><div class="sc-icon">💊</div><div class="sc-title">Farmacias</div><p class="sc-desc">POS, control de caducidad, reposición automática y factura electrónica.</p></div>
+        <div class="salud-card reveal"><div class="sc-icon">🦷</div><div class="sc-title">Odontología</div><p class="sc-desc">Odontograma digital, tratamientos por cuotas y recordatorios automáticos.</p></div>
+        <div class="salud-card reveal"><div class="sc-icon">🩺</div><div class="sc-title">Telemedicina</div><p class="sc-desc">Consultas virtuales, prescripciones digitales y seguimiento remoto.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="gdiv"></div>
+
+<!-- ═══ CONSULTORÍA & TRANSFORMACIÓN DIGITAL ═══ -->
+<section id="consultoria">
+  <div class="section-inner">
+    <div class="cons-grid">
+      <div>
+        <div class="eyebrow reveal" style="color:var(--teal)">// consultoría & transformación digital</div>
+        <h2 class="section-title reveal">No solo construyo software.<br>Te ayudo a pensar tu negocio.</h2>
+        <p class="section-desc reveal">Si no sabes por dónde empezar, qué tecnología usar o cómo digitalizar tus procesos, aquí es donde empezamos. La consultoría técnica es el primer paso de cualquier proyecto exitoso.</p>
+
+        <div class="cons-pills reveal">
+          <span class="cons-pill">Auditoría tecnológica</span>
+          <span class="cons-pill">Arquitectura de sistemas</span>
+          <span class="cons-pill">Selección de stack</span>
+          <span class="cons-pill">Levantamiento de requerimientos</span>
+          <span class="cons-pill">Rediseño de procesos</span>
+          <span class="cons-pill">Capacitación técnica</span>
+          <span class="cons-pill">Plan de migración</span>
+        </div>
+
+        <div class="cons-phases reveal">
+          <div class="cons-phase">
+            <div class="cp-num">FASE 1</div>
+            <div><div class="cp-title">Diagnóstico</div><p class="cp-desc">Analizo cómo trabaja tu empresa hoy: procesos, herramientas, cuellos de botella y oportunidades de mejora.</p></div>
+          </div>
+          <div class="cons-phase">
+            <div class="cp-num">FASE 2</div>
+            <div><div class="cp-title">Hoja de ruta</div><p class="cp-desc">Diseño un plan claro de qué tecnología implementar, en qué orden y con qué inversión.</p></div>
+          </div>
+          <div class="cons-phase">
+            <div class="cp-num">FASE 3</div>
+            <div><div class="cp-title">Implementación</div><p class="cp-desc">Construyo las soluciones, integro sistemas existentes y capacito a tu equipo.</p></div>
+          </div>
+          <div class="cons-phase">
+            <div class="cp-num">FASE 4</div>
+            <div><div class="cp-title">Acompañamiento</div><p class="cp-desc">Monitoreo, soporte continuo y mejoras iterativas para que la transformación sea permanente.</p></div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="eyebrow reveal" style="color:var(--teal);margin-bottom:1.25rem">¿Qué incluye la transformación digital?</div>
+        <div class="td-cards">
+          <div class="td-card reveal">
+            <div class="td-icon">🗺️</div>
+            <div class="td-text"><strong>Mapeo de procesos</strong><p>Identifico qué haces manualmente que puede automatizarse y cuánto tiempo y dinero te cuesta hacerlo así.</p></div>
+          </div>
+          <div class="td-card reveal">
+            <div class="td-icon">⚙️</div>
+            <div class="td-text"><strong>Automatización de operaciones</strong><p>Flujos de trabajo, notificaciones, reportes y tareas repetitivas que pasan a correr solos.</p></div>
+          </div>
+          <div class="td-card reveal">
+            <div class="td-icon">📊</div>
+            <div class="td-text"><strong>Datos que hablan</strong><p>Dashboards y KPIs en tiempo real para que tomes decisiones basadas en números, no en suposiciones.</p></div>
+          </div>
+          <div class="td-card reveal">
+            <div class="td-icon">🔗</div>
+            <div class="td-text"><strong>Integración de sistemas</strong><p>Conecto tu facturación, inventario, CRM, contabilidad y cualquier sistema en un ecosistema unificado.</p></div>
+          </div>
+          <div class="td-card reveal">
+            <div class="td-icon">☁️</div>
+            <div class="td-text"><strong>Migración a la nube</strong><p>Muevo tus sistemas legados a la nube con cero pérdida de datos y mínimo tiempo de inactividad.</p></div>
+          </div>
+          <div class="td-card reveal">
+            <div class="td-icon">🎓</div>
+            <div class="td-text"><strong>Capacitación del equipo</strong><p>Formo a tu equipo para que adopte las nuevas herramientas y la transformación sea sostenible.</p></div>
+          </div>
+        </div>
+        <div style="margin-top:1.5rem" class="reveal">
+          <a href="#contacto" class="btn-primary">Quiero una consultoría gratuita →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="gdiv"></div>
+
+<!-- ═══ SERVICIOS ═══ -->
+<section id="cualquier">
+  <div class="section-inner">
+    <div class="cualquier-hero reveal">
+      <div class="eyebrow">// alcance total</div>
+      <div class="big-claim">Si tu negocio lo necesita,<br><span class="grad">yo lo construyo.</span></div>
+      <p style="color:var(--lo);font-size:1.1rem;max-width:650px;margin:0 auto 3rem;line-height:1.75;">No hay proyecto demasiado grande ni demasiado específico. Tengo el stack técnico y la experiencia para atacar cualquier problema de software, desde un landing page hasta un ERP completo.</p>
+    </div>
+    <div class="services-mega">
+      <div class="svc reveal"><span class="svc-em">🧾</span><div class="svc-name">Facturación Electrónica SRI</div><p class="svc-blurb">Firma XAdES-BES, RIDE PDF, envío SRI y manejo de errores en producción real.</p></div>
+      <div class="svc reveal"><span class="svc-em">🌐</span><div class="svc-name">Aplicaciones Web</div><p class="svc-blurb">SPAs y portales con React, Next.js, TypeScript. Rápidas y escalables.</p></div>
+      <div class="svc reveal"><span class="svc-em">🐍</span><div class="svc-name">Backends &amp; APIs</div><p class="svc-blurb">APIs REST con Django, Node.js o Laravel. Auth, permisos y docs incluidos.</p></div>
+      <div class="svc reveal"><span class="svc-em">☁️</span><div class="svc-name">Cloud &amp; DevOps</div><p class="svc-blurb">Docker, CI/CD, AWS, Vercel. Cero downtime en producción.</p></div>
+      <div class="svc reveal"><span class="svc-em">📱</span><div class="svc-name">PWA &amp; Offline-First</div><p class="svc-blurb">Apps que funcionan sin internet con sync automático al volver la conexión.</p></div>
+      <div class="svc reveal"><span class="svc-em">🏛️</span><div class="svc-name">Sistemas para Gobierno</div><p class="svc-blurb">Trámites digitales, portales ciudadanos y cumplimiento normativo.</p></div>
+      <div class="svc reveal"><span class="svc-em">🔗</span><div class="svc-name">Integraciones ERP</div><p class="svc-blurb">Conexión con Odoo, SAP, CONTAWIN y sistemas legados.</p></div>
+      <div class="svc reveal"><span class="svc-em">📈</span><div class="svc-name">Automatización SRI</div><p class="svc-blurb">Formularios 103, 104, 105, ATS y Superintendencia de Compañías.</p></div>
+      <div class="svc reveal"><span class="svc-em">🛒</span><div class="svc-name">E-commerce</div><p class="svc-blurb">Tiendas online con pasarelas de pago ecuatorianas y control de stock.</p></div>
+      <div class="svc reveal"><span class="svc-em">🤖</span><div class="svc-name">Automatización &amp; Bots</div><p class="svc-blurb">Bots de WhatsApp, scrapers, RPA y procesos automáticos que ahorran horas.</p></div>
+      <div class="svc reveal"><span class="svc-em">📊</span><div class="svc-name">Dashboards &amp; Reportes</div><p class="svc-blurb">Visualización de datos en tiempo real, KPIs y exportación a Excel/PDF.</p></div>
+      <div class="svc reveal"><span class="svc-em">🔐</span><div class="svc-name">Seguridad &amp; Auth</div><p class="svc-blurb">JWT, OAuth, 2FA, cifrado AES-256 y cumplimiento de privacidad.</p></div>
+    </div>
+  </div>
+</section>
+
+<div class="gdiv"></div>
+
+<!-- ═══ STACK ═══ -->
+<section id="stack">
+  <div class="section-inner" style="padding-bottom:2rem">
+    <div class="reveal" style="text-align:center">
+      <div class="eyebrow">// tecnologías</div>
+      <h2 class="section-title">Stack moderno, probado en producción</h2>
+    </div>
+  </div>
+  <div class="stack-ticker-wrap"><div class="stack-ticker" id="ticker"></div></div>
+  <div style="padding-bottom:3rem"></div>
+</section>
+
+<div class="gdiv"></div>
+
+<!-- ═══ PROCESO ═══ -->
+<section id="proceso">
+  <div class="section-inner">
+    <div class="reveal" style="text-align:center">
+      <div class="eyebrow">// cómo trabajamos</div>
+      <h2 class="section-title">De tu idea al sistema en producción</h2>
+    </div>
+    <div class="proceso-steps">
+      <div class="step reveal"><div class="step-num">01</div><div class="step-title">Descubrimiento</div><p class="step-desc">Reunión gratuita para entender tu proceso, tus dolores y definir el alcance real.</p></div>
+      <div class="step reveal"><div class="step-num">02</div><div class="step-title">Propuesta técnica</div><p class="step-desc">Arquitectura, stack, hitos de entrega, cronograma y presupuesto claro sin sorpresas.</p></div>
+      <div class="step reveal"><div class="step-num">03</div><div class="step-title">Desarrollo ágil</div><p class="step-desc">Sprints con demos cada semana. Ves el progreso, no esperas hasta el final.</p></div>
+      <div class="step reveal"><div class="step-num">04</div><div class="step-title">Entrega &amp; soporte</div><p class="step-desc">Deploy en producción, capacitación a tu equipo y soporte post-entrega incluido.</p></div>
+    </div>
+  </div>
+</section>
+
+<div class="gdiv"></div>
+
+<!-- ═══ POR QUÉ ═══ -->
+<section id="porque">
+  <div class="section-inner">
+    <div class="porque-grid">
+      <div>
+        <div class="eyebrow reveal">// diferenciadores</div>
+        <h2 class="section-title reveal">Por qué elegirme a mí</h2>
+        <p class="section-desc reveal">No solo entrego código: entrego soluciones que tu equipo usa desde el día uno.</p>
+        <div class="porque-list">
+          <div class="porque-item reveal"><div class="p-icon ic-c">🇪🇨</div><div class="porque-text"><strong>Experto en normativa ecuatoriana</strong><p>SRI, Superintendencia de Compañías, MSP, IESS, normativa municipal. Conozco las reglas del juego local.</p></div></div>
+          <div class="porque-item reveal"><div class="p-icon ic-v">⚡</div><div class="porque-text"><strong>Full Stack real, no lo finjo</strong><p>Frontend React/Next.js, backend Django/Node, infra Docker/AWS. Un solo interlocutor técnico para todo.</p></div></div>
+          <div class="porque-item reveal"><div class="p-icon ic-t">🧠</div><div class="porque-text"><strong>Consultoría + construcción</strong><p>No solo programo: analizo tu negocio, diseño la solución correcta y te acompaño en la transformación.</p></div></div>
+          <div class="porque-item reveal"><div class="p-icon ic-g">📦</div><div class="porque-text"><strong>Entrego, no prometo</strong><p>Historial de sistemas en producción funcionando. Referencias verificables disponibles.</p></div></div>
+        </div>
+      </div>
+      <div class="metrics-grid">
+        <div class="metric-card reveal"><div class="metric-num mc">+6</div><div class="metric-label">Años en desarrollo</div></div>
+        <div class="metric-card reveal"><div class="metric-num mv">+20</div><div class="metric-label">Proyectos entregados</div></div>
+        <div class="metric-card reveal"><div class="metric-num mg">100%</div><div class="metric-label">SRI integrado</div></div>
+        <div class="metric-card reveal"><div class="metric-num ma">∞</div><div class="metric-label">Posibilidades</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="gdiv"></div>
+
+<!-- ═══ CONTACTO ═══ -->
+<section id="contacto">
+  <div class="section-inner">
+    <div class="contact-layout">
+      <div>
+        <div class="eyebrow reveal">// hablemos</div>
+        <h2 class="section-title reveal">¿Tienes un proyecto?<br>Cuéntame.</h2>
+        <p class="section-desc reveal" style="margin-bottom:1rem">Primera consulta sin costo ni compromiso. Te respondo en menos de 24 horas con una propuesta inicial.</p>
+        <div class="contact-items reveal">
+          <div class="contact-item"><div class="ci-icon">📧</div><a href="mailto:kevin.santana4621@utc.edu.ec">kevin.santana4621@utc.edu.ec</a></div>
+          <div class="contact-item"><div class="ci-icon">💬</div><a href="https://wa.me/593983135746" target="_blank">+593 98 313 5746 (WhatsApp)</a></div>
+          <div class="contact-item"><div class="ci-icon">🇪🇨</div><span>Ecuador · disponible para proyectos remotos</span></div>
+        </div>
+        <div class="contact-promise reveal">
+          <p><strong>Mi compromiso:</strong> Si recibo tu mensaje hoy, te respondo hoy. Si no tengo la solución exacta que necesitas, te lo digo con honestidad y te oriento hacia la mejor opción.</p>
+        </div>
+      </div>
+
+      <div class="contact-form reveal">
+        <div id="form-fields">
+          <h3 style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:1.2rem;margin-bottom:.4rem">Solicitar propuesta gratuita</h3>
+          <p style="color:var(--lo);font-size:.85rem;margin-bottom:1.5rem">Cuéntame tu proyecto y te contacto a la brevedad.</p>
+          <div id="form-error" class="form-error-msg">Error al enviar. Escríbeme directamente a kevin.santana4621@utc.edu.ec</div>
+          <div class="form-row">
+            <div class="field"><label>Nombre *</label><input type="text" id="f-nombre" placeholder="Tu nombre completo" /></div>
+            <div class="field"><label>Empresa / Organización</label><input type="text" id="f-empresa" placeholder="Tu empresa" /></div>
+          </div>
+          <div class="form-row">
+            <div class="field"><label>Email *</label><input type="email" id="f-email" placeholder="correo@tuempresa.com" /></div>
+            <div class="field"><label>WhatsApp</label><input type="tel" id="f-tel" placeholder="+593 99 XXX XXXX" /></div>
+          </div>
+          <div class="field">
+            <label>¿Qué necesitas? *</label>
+            <select id="f-tipo">
+              <option value="">Selecciona una opción…</option>
+              <option>Consultoría técnica / evaluación</option>
+              <option>Transformación digital de mi empresa</option>
+              <option>Sistema para clínica / consultorio / laboratorio</option>
+              <option>Facturación electrónica SRI</option>
+              <option>Sistema de inventario &amp; POS</option>
+              <option>Contabilidad &amp; reportes NIIF</option>
+              <option>Aplicación web a la medida</option>
+              <option>Sistema de gestión documental</option>
+              <option>E-commerce &amp; tienda online</option>
+              <option>Integración con ERP / APIs</option>
+              <option>Bot de WhatsApp / automatización</option>
+              <option>Dashboard &amp; reportes</option>
+              <option>Otro / no sé aún — cuéntame</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Cuéntame de tu proyecto</label>
+            <textarea id="f-mensaje" placeholder="¿Qué problema quieres resolver? ¿Tienes un plazo? ¿Ya usas algún sistema? Cualquier detalle ayuda..."></textarea>
+          </div>
+          <div class="field">
+            <label>Presupuesto estimado</label>
+            <select id="f-budget">
+              <option value="">Prefiero no especificar</option>
+              <option>Menos de $1,000</option>
+              <option>$1,000 – $3,000</option>
+              <option>$3,000 – $8,000</option>
+              <option>$8,000 – $20,000</option>
+              <option>Más de $20,000</option>
+            </select>
+          </div>
+          <button class="form-btn" id="form-btn" onclick="handleSubmit()">Enviar solicitud →</button>
+        </div>
+        <div class="form-success" id="form-success">
+          <div class="check">🚀</div>
+          <h3 style="font-family:'Space Grotesk',sans-serif;font-size:1.4rem;font-weight:600;margin-bottom:.75rem">¡Mensaje enviado!</h3>
+          <p style="color:var(--lo);line-height:1.7">Te respondo en menos de 24 horas.<br>También puedes escribirme directamente por WhatsApp.</p>
+          <a href="https://wa.me/593983135746" target="_blank" class="btn-primary" style="display:inline-block;margin-top:1.5rem">Ir a WhatsApp →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer>
+  <div class="footer-logo">KDev<span>.</span></div>
+  <div class="footer-links">
+    <a href="#productos">Productos</a>
+    <a href="#salud">Salud</a>
+    <a href="#consultoria">Consultoría</a>
+    <a href="#cualquier">Servicios</a>
+    <a href="#contacto">Contacto</a>
+  </div>
+  <p>© 2025 KDev Solutions · Ecuador · kevin.santana4621@utc.edu.ec · +593 98 313 5746</p>
+</footer>
+
+<script>
+/* PARTICLES */
+(function(){
+  const canvas=document.getElementById('particle-canvas'),ctx=canvas.getContext('2d');
+  let W,H,pts=[];
+  function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;}
+  function rand(a,b){return Math.random()*(b-a)+a;}
+  function mk(){return{x:rand(0,W),y:rand(0,H),vx:rand(-.13,.13),vy:rand(-.13,.13),r:rand(1,2.4),a:rand(.14,.5),c:Math.random()>.6?'#00D4FF':Math.random()>.5?'#7C3AED':'#10B981'};}
+  function init(){pts=Array.from({length:85},mk);}
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    for(let i=0;i<pts.length;i++){
+      const p=pts[i];p.x+=p.vx;p.y+=p.vy;
+      if(p.x<0)p.x=W;if(p.x>W)p.x=0;if(p.y<0)p.y=H;if(p.y>H)p.y=0;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle=p.c;ctx.globalAlpha=p.a;ctx.fill();ctx.globalAlpha=1;
+      for(let j=i+1;j<pts.length;j++){const q=pts[j],d=Math.hypot(p.x-q.x,p.y-q.y);if(d<140){ctx.strokeStyle=`rgba(0,212,255,${(1-d/140)*.09})`;ctx.lineWidth=.5;ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.stroke();}}
+    }
+    requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize',()=>{resize();init();});
+  resize();init();draw();
+})();
+
+/* TYPING */
+(function(){
+  const phrases=['Sistema de facturación electrónica SRI','Historia clínica para tu consultorio','Transformación digital de tu empresa','Dashboard de ventas en tiempo real','Bot de WhatsApp para tu negocio','Consultoría técnica a medida','ERP completo para tu industria','App de inventario con POS integrado'];
+  let pi=0,ci=0,del=false;
+  const el=document.getElementById('typing-text');
+  function tick(){
+    const p=phrases[pi];
+    if(!del){el.textContent=p.slice(0,++ci);if(ci===p.length){del=true;setTimeout(tick,1800);return;}}
+    else{el.textContent=p.slice(0,--ci);if(ci===0){del=false;pi=(pi+1)%phrases.length;}}
+    setTimeout(tick,del?38:54);
+  }
+  tick();
+})();
+
+/* COUNTERS */
+function animCount(el,to,dur,sfx){let s=null;function st(ts){if(!s)s=ts;const p=Math.min((ts-s)/dur,1),e=1-Math.pow(1-p,3);el.textContent=Math.floor(e*to)+sfx;if(p<1)requestAnimationFrame(st);}requestAnimationFrame(st);}
+const cObs=new IntersectionObserver(en=>{en.forEach(e=>{if(e.isIntersecting){animCount(document.getElementById('cnt-p'),25,1600,'+');animCount(document.getElementById('cnt-a'),6,1200,'+');animCount(document.getElementById('cnt-c'),12,1400,'+');cObs.disconnect();}});},{threshold:.4});
+cObs.observe(document.getElementById('hero'));
+
+/* REVEAL */
+const rObs=new IntersectionObserver(en=>{en.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');rObs.unobserve(e.target);}});},{threshold:.08});
+document.querySelectorAll('.reveal').forEach(el=>rObs.observe(el));
+
+/* TICKER */
+const techs=[{n:'Next.js 14',c:'#fff'},{n:'React 18',c:'#61DAFB'},{n:'TypeScript',c:'#3178C6'},{n:'Django 5',c:'#10B981'},{n:'Python',c:'#F59E0B'},{n:'Node.js',c:'#68A063'},{n:'Firebase',c:'#FFA000'},{n:'Docker',c:'#00D4FF'},{n:'PostgreSQL',c:'#336791'},{n:'Tailwind CSS',c:'#38BDF8'},{n:'AWS',c:'#F59E0B'},{n:'Vercel',c:'#fff'},{n:'Laravel 11',c:'#FF2D20'},{n:'Vue 3',c:'#42B883'},{n:'Redis',c:'#DC382D'},{n:'XAdES-BES',c:'#7C3AED'},{n:'WeasyPrint',c:'#10B981'},{n:'shadcn/ui',c:'#fff'},{n:'REST API',c:'#00D4FF'},{n:'Git · CI/CD',c:'#F05033'},{n:'MySQL',c:'#4479A1'},{n:'Dexie.js',c:'#a78bfa'}];
+(function(){const t=document.getElementById('ticker');[...techs,...techs].forEach(x=>{const p=document.createElement('div');p.className='tech-pill';p.innerHTML=`<span class="tdot" style="background:${x.c}"></span>${x.n}`;t.appendChild(p);});})();
+
+/* NAV scroll */
+window.addEventListener('scroll',()=>{
+  const n=document.getElementById('navbar');
+  n.style.background=window.scrollY>50?'rgba(4,8,15,0.96)':'rgba(4,8,15,0.85)';
+  // Active link
+  const sections=['hero','productos','salud','consultoria','cualquier','proceso'];
+  let cur='';
+  sections.forEach(id=>{const el=document.getElementById(id);if(el&&window.scrollY>=el.offsetTop-120)cur=id;});
+  document.querySelectorAll('.nav-links a').forEach(a=>{
+    a.classList.toggle('active', a.getAttribute('href')==='#'+cur);
+  });
+});
+
+/* HAMBURGER */
+function toggleMenu(){
+  const hb=document.getElementById('hamburger');
+  const mm=document.getElementById('mobile-menu');
+  hb.classList.toggle('open');
+  mm.classList.toggle('open');
+  document.body.style.overflow=mm.classList.contains('open')?'hidden':'';
+}
+function closeMenu(){
+  document.getElementById('hamburger').classList.remove('open');
+  document.getElementById('mobile-menu').classList.remove('open');
+  document.body.style.overflow='';
+}
+
+/* FORM */
+async function handleSubmit(){
+  const nombre=document.getElementById('f-nombre').value.trim();
+  const email=document.getElementById('f-email').value.trim();
+  const tipo=document.getElementById('f-tipo').value;
+  const errEl=document.getElementById('form-error');
+  errEl.style.display='none';
+  if(!nombre||!email||!tipo){alert('Por favor completa: nombre, email y tipo de solución.');return;}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){alert('Email inválido.');return;}
+  const btn=document.getElementById('form-btn');
+  btn.disabled=true;btn.textContent='Enviando…';
+  const payload={name:nombre,email,empresa:document.getElementById('f-empresa').value,whatsapp:document.getElementById('f-tel').value,tipo_solucion:tipo,mensaje:document.getElementById('f-mensaje').value,presupuesto:document.getElementById('f-budget').value,_subject:`Nueva solicitud de ${nombre} — KDev Solutions`,_replyto:email};
+  try{
+    const res=await fetch('https://formspree.io/f/xgvankzq',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(payload)});
+    if(res.ok){document.getElementById('form-fields').style.display='none';document.getElementById('form-success').style.display='block';}
+    else{errEl.style.display='block';btn.disabled=false;btn.textContent='Enviar solicitud →';}
+  }catch(e){errEl.style.display='block';btn.disabled=false;btn.textContent='Enviar solicitud →';}
+}
+</script>
+</body>
+</html>
